@@ -7,6 +7,10 @@ Well it is an interactive shell, and it could be improved.<br><br>
 <br><br>
 <b>Notes:</b><br>
 
-history would be rad.
-lshw -- list hardware
-check -- or whatever I might call it, integrate the diagnostic tool I made this weekend
+history would be rad.<br>
+lshw -- list hardware see page 368 of manual<br>
+....I know how to check the CPU module, but not the model.<br>
+the CPU reports 16 IO module type ID 0, I dont know where it retains the 
+exact model, It might not even do that. 
+
+
