@@ -3,6 +3,7 @@
 Interactive terminal shell for controlling an IDEC PLC over serial using MiSmSerial.
 
 Commands:
+  clear                  Clear screen
   config                 Configure serial connection settings
   connect                Open the serial connection using current config
   disconnect             Close the serial connection
@@ -152,6 +153,7 @@ class PLCTerminalApp:
         print(
             """
 Built-in commands:
+  clear                  Clear screen
   config                 Configure connection settings interactively
   connect                Open serial connection
   disconnect             Close serial connection
