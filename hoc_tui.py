@@ -3,6 +3,7 @@
 Interactive terminal shell for controlling an IDEC PLC over serial using MiSmSerial.
 
 Commands:
+  clear                  Clear screen
   config                 Configure serial connection settings
   connect                Open the serial connection using current config
   disconnect             Close the serial connection
