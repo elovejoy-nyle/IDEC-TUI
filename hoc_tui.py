@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
 Interactive terminal shell for controlling an IDEC PLC over serial using MiSmSerial.
-
+library src: https://github.com/Makerspace-Bangor/fc6a/blob/main/SERIAL/MiSmSerial.py
 Commands:
+  clear                  Clear screen
   config                 Configure serial connection settings
   connect                Open the serial connection using current config
   disconnect             Close the serial connection
