@@ -147,6 +147,9 @@ class PLCTerminalApp:
         if cmd == "status":
             self.show_status()
             return
+        if cmd == "clear":
+            self.clear()
+            return             
 
         if self.plc is None:
             print("Not connected. Run 'config' and then 'connect' first.")
@@ -291,6 +294,15 @@ Examples:
             f"{now.year:04d}-{now.month:02d}-{now.day:02d} "
             f"{now.hour:02d}:{now.minute:02d}:{now.second:02d}"
         )
+
+    def clear(self) -> None:
+		#besides user clear, come commands are a lot of lines, esp if debug is on.
+        if os.name == 'nt':
+            os.system('cls') # windows clear
+        else:
+            os.system('clear') 
+        return
+
 
     def run_check(self) -> None:
         candidates = [
