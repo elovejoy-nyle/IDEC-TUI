@@ -60,7 +60,7 @@ CONFIG_PATH = Path.home() / ".plc_terminal_config.json"
 class AppConfig:
     port: str = "/dev/ttyUSB0"
     device: str = "FF"
-    baud: int = 19200
+    baud: int = 9600
     timeout: float = 1.0
     bytesize: int = 8
     parity: str = "N"
@@ -112,6 +112,7 @@ class PLCTerminalApp:
         self.disconnect()
         print("Bye.")
 
+
     def handle_line(self, line: str) -> None:
         parts = shlex.split(line)
         cmd = parts[0].lower()
@@ -138,7 +139,9 @@ class PLCTerminalApp:
         if cmd == "status":
             self.show_status()
             return
-
+        if cmd == "clear":
+            os.system('clear') #nix only for now
+            return      
         if self.plc is None:
             print("Not connected. Run 'config' and then 'connect' first.")
             return
