@@ -8,3 +8,5 @@ Well it is an interactive shell, and it could be improved.<br><br>
 <b>Notes:</b><br>
 
 history would be rad.
+lshw -- list hardware
+check -- or whatever I might call it, integrate the diagnostic tool I made this weekend
