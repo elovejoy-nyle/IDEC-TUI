@@ -3,7 +3,6 @@
 Interactive terminal shell for controlling an IDEC PLC over serial using MiSmSerial.
 
 Commands:
-  clear                  Clear screen
   config                 Configure serial connection settings
   connect                Open the serial connection using current config
   disconnect             Close the serial connection
@@ -112,8 +111,15 @@ class PLCTerminalApp:
 
         self.disconnect()
         print("Bye.")
-
-
+    
+    def clear(self) -> None:
+		#besides user clear, come commands are a lot of lines, esp if debug is on.
+        if os.name == 'nt':
+            os.system('cls') # windows clear
+        else:
+            os.system('clear') 
+        return
+    
     def handle_line(self, line: str) -> None:
         parts = shlex.split(line)
         cmd = parts[0].lower()
@@ -141,7 +147,7 @@ class PLCTerminalApp:
             self.show_status()
             return
         if cmd == "clear":
-            os.system('clear') #nix only for now
+            self.clear()
             return      
         if self.plc is None:
             print("Not connected. Run 'config' and then 'connect' first.")
@@ -229,7 +235,7 @@ Examples:
         self.config.bcc_mode = self.ask_choice(
             "BCC mode", self.config.bcc_mode, ["auto", "enq", "no_enq"]
         )
-
+        self.clear()
         self._save_config()
         print(f"Saved config to {CONFIG_PATH}")
 
