@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """
 Interactive terminal shell for controlling an IDEC PLC over serial using MiSmSerial.
-library src: https://github.com/Makerspace-Bangor/fc6a/blob/main/SERIAL/MiSmSerial.py
+
 Commands:
-  clear                  Clear screen
   config                 Configure serial connection settings
   connect                Open the serial connection using current config
   disconnect             Close the serial connection
   status                 Show current config + connection state
   help                   Show help
   methods                List supported MiSmSerial methods
+  check                  Run the external PLC diagnostic script and return
+  set-time               Set the PLC date/time from this computer and return
   q | quit | exit        Quit
 
 PLC commands can be entered directly after connecting, for example:
@@ -41,6 +42,7 @@ import shlex
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
+import subprocess
 from typing import Any
 
 try:
@@ -61,7 +63,7 @@ CONFIG_PATH = Path.home() / ".plc_terminal_config.json"
 class AppConfig:
     port: str = "/dev/ttyUSB0"
     device: str = "FF"
-    baud: int = 9600
+    baud: int = 19200
     timeout: float = 1.0
     bytesize: int = 8
     parity: str = "N"
@@ -112,15 +114,7 @@ class PLCTerminalApp:
 
         self.disconnect()
         print("Bye.")
-    
-    def clear(self) -> None:
-		#besides user clear, come commands are a lot of lines, esp if debug is on.
-        if os.name == 'nt':
-            os.system('cls') # windows clear
-        else:
-            os.system('clear') 
-        return
-    
+
     def handle_line(self, line: str) -> None:
         parts = shlex.split(line)
         cmd = parts[0].lower()
@@ -135,6 +129,12 @@ class PLCTerminalApp:
         if cmd == "methods":
             self.show_methods()
             return
+        if cmd == "check":
+            self.run_check()
+            return
+        if cmd == "set-time":
+            self.set_time()
+            return
         if cmd == "config":
             self.configure_interactive()
             return
@@ -147,9 +147,7 @@ class PLCTerminalApp:
         if cmd == "status":
             self.show_status()
             return
-        if cmd == "clear":
-            self.clear()
-            return      
+
         if self.plc is None:
             print("Not connected. Run 'config' and then 'connect' first.")
             return
@@ -160,12 +158,13 @@ class PLCTerminalApp:
         print(
             """
 Built-in commands:
-  clear                  Clear screen
   config                 Configure connection settings interactively
   connect                Open serial connection
   disconnect             Close serial connection
   status                 Show config and connection status
   methods                List supported MiSmSerial methods
+  check                  Run SERIAL/EXAMPLES/debug.py and return
+  set-time               Set the PLC clock from this computer
   help                   Show this help
   q | quit | exit        Quit
 
@@ -185,6 +184,8 @@ PLC commands:
 Examples:
   config
   connect
+  check
+  set-time
   read D0100
   write D0100 42
   read_bit M8004.15
@@ -236,7 +237,7 @@ Examples:
         self.config.bcc_mode = self.ask_choice(
             "BCC mode", self.config.bcc_mode, ["auto", "enq", "no_enq"]
         )
-        self.clear()
+
         self._save_config()
         print(f"Saved config to {CONFIG_PATH}")
 
@@ -266,6 +267,60 @@ Examples:
         if value not in choices:
             raise ValueError(f"Expected one of: {', '.join(choices)}")
         return value
+
+    def set_time(self) -> None:
+        if self.plc is None:
+            print("Not connected. Run 'config' and then 'connect' first.")
+            return
+
+        from datetime import datetime
+
+        now = datetime.now()
+        self.plc.write("D8015", now.year % 100)
+        self.plc.write("D8016", now.month)
+        self.plc.write("D8017", now.day)
+        self.plc.write("D8018", now.weekday())
+        self.plc.write("D8019", now.hour)
+        self.plc.write("D8020", now.minute)
+        self.plc.write("D8021", now.second)
+        self.plc.write_bit("M8020", 1)
+        self.plc.write_bit("M8020", 0)
+
+        print(
+            "PLC time set to: "
+            f"{now.year:04d}-{now.month:02d}-{now.day:02d} "
+            f"{now.hour:02d}:{now.minute:02d}:{now.second:02d}"
+        )
+
+    def run_check(self) -> None:
+        candidates = [
+            Path(__file__).resolve().parent / "debug.py",
+            Path(__file__).resolve().parent / "SERIAL" / "EXAMPLES" / "debug.py",
+            Path.cwd() / "debug.py",
+            Path.cwd() / "SERIAL" / "EXAMPLES" / "debug.py",
+        ]
+
+        debug_script = next((p for p in candidates if p.exists()), None)
+        if debug_script is None:
+            print("Could not find debug.py. Expected it beside this app or in SERIAL/EXAMPLES/.")
+            return
+
+        print(f"Running diagnostic: {debug_script}")
+        was_connected = self.plc is not None
+        if was_connected:
+            self.disconnect()
+
+        try:
+            result = subprocess.run([sys.executable, str(debug_script)], check=False)
+            print(f"Diagnostic finished with exit code {result.returncode}")
+        except Exception as exc:
+            print(f"Failed to run diagnostic: {exc}")
+        finally:
+            if was_connected:
+                try:
+                    self.connect()
+                except Exception as exc:
+                    print(f"Could not reconnect automatically: {exc}")
 
     def connect(self) -> None:
         self.disconnect()
